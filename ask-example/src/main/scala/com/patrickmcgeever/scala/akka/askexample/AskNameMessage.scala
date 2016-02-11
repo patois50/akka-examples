@@ -18,21 +18,25 @@ class TestActor extends Actor {
 }
 
 object AskTest extends App {
+
   //Create the system and actor
   val system = ActorSystem("AskTestSystem")
   val myActor = system.actorOf(Props[TestActor], name = "myActor")
 
   // (1) One way to ask an actor
 
-  val future = myActor ? AskNameMessage
-  val result = Await.result(future, (5 seconds)).asInstanceOf[String]
-  println(result)
+  // Better practise to send asychronous messages and have receiver actors or send message back to the sender
 
 
-    // (2) this is a slightly different way to ask another actor
-  val future2: Future[String] = pattern.ask(myActor, AskNameMessage("Patrick"))(5 seconds).mapTo[String]
-  val result2 = Await.result(future2, 1 second)
-  println(result2)
+//  val future = myActor ? AskNameMessage
+//  val result = Await.result(future, (5 seconds)).asInstanceOf[String]
+//  println(result)
+//
+//
+//    // (2) this is a slightly different way to ask another actor
+//  val future2: Future[String] = pattern.ask(myActor, AskNameMessage("Patrick"))(5 seconds).mapTo[String]
+//  val result2 = Await.result(future2, 1 second)
+//  println(result2)
 
   system.terminate()
 }

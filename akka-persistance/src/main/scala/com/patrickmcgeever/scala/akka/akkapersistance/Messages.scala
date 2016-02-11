@@ -1,9 +1,13 @@
 package com.patrickmcgeever.scala.akka.akkapersistance
 
 object Messages {
-  sealed trait ContactMessage
-  case class CreateContact(contact: Contact) extends ContactMessage
-  object AddEmail extends ContactMessage
+  case class CreateContact(contact: Contact)
+  object ContactCreated
+  case class AddEmail(name: String, email: String)
+  object EmailAddedToContact
+  case class RetrieveContact(name: String)
+  case class ContactFound(contact: Contact)
+  object ContactNotFound
 
   object Success
   object Failure
