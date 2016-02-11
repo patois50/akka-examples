@@ -1,8 +1,11 @@
 package com.patrickmcgeever.scala.akka.akkapersistence
 
 import akka.actor.{Actor, ActorSystem, Props}
-import com.patrickmcgeever.scala.akka.akkapersistence.Messages.{ContactCreated, ContactFound, CreateContact, RetrieveContact}
+import akka.pattern.BackoffSupervisor
+import akka.persistence.fsm.PersistentFSM.Shutdown
+import com.patrickmcgeever.scala.akka.akkapersistence.Messages.{ContactCreated, CreateContact, RetrieveContact}
 
+import scala.concurrent.duration.DurationInt
 import scala.io.StdIn
 
 object ContactApp extends App {
@@ -16,7 +19,15 @@ object ContactApp extends App {
 
   val system = ActorSystem("ContactApp")
   val receiverActor = system.actorOf(Props[Receiver], "receiver")
-  val contactActor = system.actorOf(ContactActor.props(receiverActor), "contacts")
+
+  val contactChildProps = ContactActor.props(receiverActor);
+  val contactSupervisorProps = BackoffSupervisor.props(
+    contactChildProps,
+    "contactActor",
+    3.seconds,
+    30.seconds,
+    0.2)
+  val contactSupervisorActor = system.actorOf(contactSupervisorProps, name = "contactSupervisor")
 
   var in = ""
   do {
@@ -32,6 +43,7 @@ object ContactApp extends App {
     }
   } while (in != "exit")
 
+  contactSupervisorActor ! Shutdown
   system.terminate()
 
   def newContact() = {
@@ -49,7 +61,7 @@ object ContactApp extends App {
 
     val contact = Contact(name, Option(telNo), Option(email))
 
-    contactActor ! CreateContact(contact)
+    contactSupervisorActor ! CreateContact(contact)
   }
 
   def retrieveContact() = {
@@ -57,19 +69,23 @@ object ContactApp extends App {
     print("> ")
     val name = StdIn.readLine()
 
-    contactActor ! RetrieveContact(name)
+    contactSupervisorActor ! RetrieveContact(name)
   }
 
   class Receiver extends Actor {
     override def receive: Receive = {
       case ContactCreated => println("Contact created")
-      case ContactFound(contact) => {
-        val name = contact.name
-        val telNo = if(contact.telNo.nonEmpty) contact.telNo.get else ""
-        val email = if(contact.email.nonEmpty) contact.email.get else ""
-        println(s"Name: $name")
-        println(s"Telephone: $telNo")
-        println(s"Email: $email")
+      case contact: Option[Contact] => {
+        if(contact.nonEmpty) {
+          val name = contact.get.name
+          val telNo = contact.get.telNo.getOrElse("")
+          val email = contact.get.email.getOrElse("")
+          println(s"Name: $name")
+          println(s"Telephone: $telNo")
+          println(s"Email: $email")
+        } else {
+          println("Contact does not exist")
+        }
       }
     }
   }

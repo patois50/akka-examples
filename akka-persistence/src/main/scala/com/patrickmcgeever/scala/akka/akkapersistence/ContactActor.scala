@@ -1,27 +1,37 @@
 package com.patrickmcgeever.scala.akka.akkapersistence
 
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.{ActorRef, Props}
+import akka.persistence.PersistentActor
 import com.patrickmcgeever.scala.akka.akkapersistence.Messages._
 
 object ContactActor {
   def props(receiver: ActorRef): Props = Props(new ContactActor(receiver))
-  var contacts: Map[String, Contact] = Map()
 }
 
-class ContactActor(receiver: ActorRef) extends Actor {
+case class ContactActorState(contacts: Map[String, Contact] = Map()) {
+  def added(contact: Contact): ContactActorState = copy(contacts + (contact.name -> contact))
 
-  import com.patrickmcgeever.scala.akka.akkapersistence.ContactActor._
+  def retrieveContact(name: String): Option[Contact] = contacts.get(name)
+}
 
-  def createContact(contact: Contact) = {
-    contacts = contacts + (contact.name -> contact)
+class ContactActor(receiver: ActorRef) extends PersistentActor {
+
+  override def persistenceId = "contact-actor-id"
+
+  var state = ContactActorState()
+
+  def addToContacts(contact: Contact) = state = state.added(contact)
+
+  override def receiveCommand: Receive = {
+    case CreateContact(contact) =>
+      persist(contact)(addToContacts)
+      receiver ! ContactCreated
+
+    case RetrieveContact(name) =>
+      receiver ! state.retrieveContact(name)
   }
 
-  override def receive = {
-    case CreateContact(contact) =>
-      createContact(contact)
-      receiver ! ContactCreated
-    case RetrieveContact(name) =>
-      val contact = contacts.get(name)
-      receiver ! (if(contact.nonEmpty) ContactFound(contact.get) else ContactNotFound)
+  override def receiveRecover: Receive = {
+    case contact: Contact => addToContacts(contact)
   }
 }
