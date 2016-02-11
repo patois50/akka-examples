@@ -1,4 +1,4 @@
-package com.patrickmcgeever.scala.akka.akkapersistance
+package com.patrickmcgeever.scala.akka.akkapersistence
 
 object Messages {
   case class CreateContact(contact: Contact)

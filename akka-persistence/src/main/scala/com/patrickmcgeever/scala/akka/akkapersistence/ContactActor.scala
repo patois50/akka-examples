@@ -1,7 +1,7 @@
-package com.patrickmcgeever.scala.akka.akkapersistance
+package com.patrickmcgeever.scala.akka.akkapersistence
 
 import akka.actor.{Props, ActorRef, Actor}
-import com.patrickmcgeever.scala.akka.akkapersistance.Messages._
+import com.patrickmcgeever.scala.akka.akkapersistence.Messages._
 
 object ContactActor {
   def props(receiver: ActorRef): Props = Props(new ContactActor(receiver))
@@ -10,7 +10,7 @@ object ContactActor {
 
 class ContactActor(receiver: ActorRef) extends Actor {
 
-  import com.patrickmcgeever.scala.akka.akkapersistance.ContactActor._
+  import com.patrickmcgeever.scala.akka.akkapersistence.ContactActor._
 
   def createContact(contact: Contact) = {
     contacts = contacts + (contact.name -> contact)

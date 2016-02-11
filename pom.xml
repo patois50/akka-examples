@@ -14,7 +14,7 @@
     <module>hello-world</module>
     <module>ask-example</module>
     <module>fsm</module>
-    <module>akka-persistance</module>
+    <module>akka-persistence</module>
   </modules>
 
   <dependencyManagement>
