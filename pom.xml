@@ -16,5 +16,6 @@
     <module>fsm</module>
     <module>akka-persistance</module>
     <module>akka-stream-ex1</module>
+    <module>akka-actor</module>
   </modules>
 </project>
