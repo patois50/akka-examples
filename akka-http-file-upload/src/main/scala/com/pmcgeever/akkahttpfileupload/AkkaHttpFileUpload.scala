@@ -2,7 +2,7 @@ package com.pmcgeever.akkahttpfileupload
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.typesafe.config.{Config, ConfigFactory}
@@ -22,7 +22,8 @@ object AkkaHttpFileUpload extends App {
 
   Try {
     val applicationConfig = ApplicationConfig(config.getConfig("akka-http-file-upload"))
-    bindRestService(applicationConfig.interface, applicationConfig.port)
+    val invocationService = system.actorOf(InvocationService.props(applicationConfig))
+    bindRestService(applicationConfig, invocationService)
     log.info("Server is listening to {}:{}", applicationConfig.interface, applicationConfig.port)
   } recover {
     case th =>
@@ -32,9 +33,12 @@ object AkkaHttpFileUpload extends App {
       System.exit(1)
   }
 
-  private def bindRestService(interface: String, port: Int) =
+  private def bindRestService(config: ApplicationConfig, invocationService: ActorRef) = {
+    val interface = config.interface
+    val port = config.port
     Http()(system).bindAndHandle(
-      Api.route,
+      Api.route(config, invocationService),
       interface,
       port)
+  }
 }
