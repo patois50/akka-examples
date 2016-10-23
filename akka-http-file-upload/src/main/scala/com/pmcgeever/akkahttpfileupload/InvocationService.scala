@@ -32,7 +32,7 @@ class InvocationService(config: ApplicationConfig, time: TimeProvider) extends A
   override def receive: Receive = {
     case Invoke(invocation) =>
       val logPath = Paths.get(config.dataDir).resolve(invocation.id).resolve("log.txt")
-      val command = s"ls -alrh >> ${logPath.toString}"
+      val command = s"ls -alrh > ${logPath.toAbsolutePath.toString}"
       val now = time()
       val newInvocation = invocation.copy(
         startedAt = Some(now),
